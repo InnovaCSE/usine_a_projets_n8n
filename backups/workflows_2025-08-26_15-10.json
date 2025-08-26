@@ -1,0 +1,258 @@
+[
+  {
+    "createdAt": "2025-08-25T21:49:40.236Z",
+    "updatedAt": "2025-08-26T15:00:26.687Z",
+    "id": "pI2VCgEZWXIJRqyt",
+    "name": "backup_hybride.json",
+    "active": false,
+    "isArchived": false,
+    "nodes": [
+      {
+        "parameters": {
+          "triggerTimes": {
+            "item": [
+              {
+                "hour": 2
+              }
+            ]
+          }
+        },
+        "id": "09573828-2a41-4267-b256-8e2be085b1c2",
+        "name": "Cron 02:00 Europe/Paris",
+        "type": "n8n-nodes-base.cron",
+        "typeVersion": 1,
+        "position": [
+          608,
+          -288
+        ]
+      },
+      {
+        "parameters": {
+          "url": "={{($env.N8N_BASE_URL || 'https://n8n-production-49d7.up.railway.app') + '/api/v1/workflows'}}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "X-N8N-API-KEY",
+                "value": "={{$env.N8N_PUBLIC_API_KEY}}"
+              },
+              {
+                "name": "accept",
+                "value": "application/json"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "7addb6d3-5156-4b4b-993b-3b203c1d5a7c",
+        "name": "Export all workflows (Public API v1)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          880,
+          -288
+        ]
+      },
+      {
+        "parameters": {
+          "method": "PUT",
+          "url": "={{`https://api.github.com/repos/${$env.GITHUB_OWNER}/${$env.GITHUB_REPO}/contents/${$json[\"path\"]}`}}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "={{`Bearer ${$env.GITHUB_TOKEN}`}}"
+              },
+              {
+                "name": "User-Agent",
+                "value": "n8n-backup"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Accept",
+                "value": "application/vnd.github+json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {
+                "name": "message",
+                "value": "={{`chore(backup): ${$json[\"path\"]}`}}"
+              },
+              {
+                "name": "content",
+                "value": "={{$json[\"base64\"]}}"
+              },
+              {
+                "name": "branch",
+                "value": "main"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "5376680b-dfa6-43e5-917e-b98ea6df9b3a",
+        "name": "GitHub API → Create file (no sha)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1408,
+          -288
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const data = items[0].json?.data ?? items[0].json;  // Récupère la liste des workflows\nconst ts = new Date();\nconst pad = n => String(n).padStart(2,'0');\nconst name = `workflows_${ts.getFullYear()}-${pad(ts.getMonth()+1)}-${pad(ts.getDate())}_${pad(ts.getHours())}-${pad(ts.getMinutes())}.json`;\nconst content = JSON.stringify(data, null, 2);\nconst base64 = Buffer.from(content).toString('base64');\n\nreturn [{\n  json: {\n    path: `backups/${name}`,\n    content,\n    base64\n  }\n}];\n"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1136,
+          -288
+        ],
+        "id": "1d084156-9d70-4540-966c-363344f9dc1a",
+        "name": "Code"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://rcixdtpmuletmpnxldsc.supabase.co/rest/v1/n8n_workflow_backups",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjaXhkdHBtdWxldG1wbnhsZHNjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTU1MTE5NSwiZXhwIjoyMDY3MTI3MTk1fQ.RFKSn03RMgQZAy3fZer7oHZ_ihxkYMiGlFwRxF49Bbc"
+              },
+              {
+                "name": "Authorization",
+                "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjaXhkdHBtdWxldG1wbnhsZHNjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTU1MTE5NSwiZXhwIjoyMDY3MTI3MTk1fQ.RFKSn03RMgQZAy3fZer7oHZ_ihxkYMiGlFwRxF49Bbc"
+              },
+              {
+                "name": "Prefer",
+                "value": "return=representation"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"file_name\": \"={{$json.contenu.name || 'backup.json'}}\",\n  \"content\": \"={{$json.contenu}}\"\n}\n",
+          "options": {}
+        },
+        "id": "979ed960-85b7-4711-b17f-1dd6dfc71a27",
+        "name": "Supabase Insert",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1792,
+          -384
+        ]
+      },
+      {
+        "parameters": {
+          "mode": "raw",
+          "jsonOutput": "{\n  \"contenu\": {\n    \"name\": \"test.json\",\n    \"hello\": \"world\",\n    \"time\": \"2025-08-26T15:40:00Z\"\n  }\n}\n",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          1552,
+          -400
+        ],
+        "id": "2195484a-46a9-4a86-9d81-23ec1ce92a48",
+        "name": "Edit Fields"
+      }
+    ],
+    "connections": {
+      "Cron 02:00 Europe/Paris": {
+        "main": [
+          [
+            {
+              "node": "Export all workflows (Public API v1)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "GitHub API → Create file (no sha)": {
+        "main": [
+          [
+            {
+              "node": "Edit Fields",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Export all workflows (Public API v1)": {
+        "main": [
+          [
+            {
+              "node": "Code",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code": {
+        "main": [
+          [
+            {
+              "node": "GitHub API → Create file (no sha)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Supabase Insert": {
+        "main": [
+          []
+        ]
+      },
+      "Edit Fields": {
+        "main": [
+          [
+            {
+              "node": "Supabase Insert",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "settings": {
+      "executionOrder": "v1"
+    },
+    "staticData": null,
+    "meta": null,
+    "pinData": {},
+    "versionId": "27cdb84c-3fba-40f6-8f7c-492c5672a9da",
+    "triggerCount": 0,
+    "shared": [
+      {
+        "createdAt": "2025-08-25T21:49:40.236Z",
+        "updatedAt": "2025-08-25T21:49:40.236Z",
+        "role": "workflow:owner",
+        "workflowId": "pI2VCgEZWXIJRqyt",
+        "projectId": "niqjqkxnfkcwFIvN"
+      }
+    ],
+    "tags": []
+  }
+]
