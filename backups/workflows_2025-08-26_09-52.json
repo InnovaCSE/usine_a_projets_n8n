@@ -1,0 +1,366 @@
+[
+  {
+    "createdAt": "2025-08-25T21:49:40.236Z",
+    "updatedAt": "2025-08-26T09:38:11.184Z",
+    "id": "pI2VCgEZWXIJRqyt",
+    "name": "backup_hybride.json",
+    "active": false,
+    "isArchived": false,
+    "nodes": [
+      {
+        "parameters": {
+          "triggerTimes": {
+            "item": [
+              {
+                "hour": 2
+              }
+            ]
+          }
+        },
+        "id": "7cc78a1c-01d3-48a1-af4d-21bff3899963",
+        "name": "Cron 02:00 Europe/Paris",
+        "type": "n8n-nodes-base.cron",
+        "typeVersion": 1,
+        "position": [
+          -1296,
+          112
+        ],
+        "notesInFlow": true,
+        "notes": "Déclenche tous les jours à 02:00 (Europe/Paris)."
+      },
+      {
+        "parameters": {
+          "url": "={{($env.N8N_BASE_URL || 'https://n8n-production-49d7.up.railway.app') + '/api/v1/workflows'}}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "X-N8N-API-KEY",
+                "value": "={{$env.N8N_PUBLIC_API_KEY}}"
+              },
+              {
+                "name": "accept",
+                "value": "application/json"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "8651ba3c-2bc8-41c8-87a8-eb298ead4aba",
+        "name": "Export all workflows (Public API v1)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          -1024,
+          112
+        ],
+        "notesInFlow": true,
+        "notes": "GET /api/v1/workflows avec X-N8N-API-KEY (clé créée dans l'UI: Settings > n8n API)."
+      },
+      {
+        "parameters": {
+          "url": "={{`https://api.github.com/repos/${$env.GITHUB_OWNER}/${$env.GITHUB_REPO}/contents/${$json[\"path\"]}?ref=main`}}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "={{`Bearer ${$env.GITHUB_TOKEN}`}}"
+              },
+              {
+                "name": "User-Agent",
+                "value": "n8n-backup"
+              },
+              {
+                "name": "Accept",
+                "value": "application/vnd.github+json"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "2705ce2b-82f3-4031-bfbe-533fe506f055",
+        "name": "GitHub GET file (SHA)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          -496,
+          112
+        ],
+        "notesInFlow": true,
+        "notes": "Si 200 → la réponse contient `sha`. Si 404 → fichier inexistant."
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "boolean": [],
+            "string": [
+              {
+                "value1": "={{$json[\"sha\"]}}",
+                "operation": "isNotEmpty"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "aff9735e-0396-4d28-b55e-ac38ee60965f",
+        "name": "IF (sha exists?)",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          -256,
+          112
+        ]
+      },
+      {
+        "parameters": {
+          "method": "PUT",
+          "url": "={{`https://api.github.com/repos/${$env.GITHUB_OWNER}/${$env.GITHUB_REPO}/contents/${$json[\"path\"]}`}}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "={{`Bearer ${$env.GITHUB_TOKEN}`}}"
+              },
+              {
+                "name": "User-Agent",
+                "value": "n8n-backup"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Accept",
+                "value": "application/vnd.github+json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {}
+            ]
+          },
+          "options": {}
+        },
+        "id": "595e7320-03a7-433b-b484-755ab59f78c2",
+        "name": "GitHub API → Update file (with sha)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          0,
+          0
+        ],
+        "notesInFlow": true,
+        "notes": "Mise à jour si le fichier existe (sha fourni)."
+      },
+      {
+        "parameters": {
+          "method": "PUT",
+          "url": "={{`https://api.github.com/repos/${$env.GITHUB_OWNER}/${$env.GITHUB_REPO}/contents/${$json[\"path\"]}`}}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "={{`Bearer ${$env.GITHUB_TOKEN}`}}"
+              },
+              {
+                "name": "User-Agent",
+                "value": "n8n-backup"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Accept",
+                "value": "application/vnd.github+json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {}
+            ]
+          },
+          "options": {}
+        },
+        "id": "9c072229-e2d5-4bbb-83af-2b9da6cee64f",
+        "name": "GitHub API → Create file (no sha)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          0,
+          224
+        ],
+        "notesInFlow": true,
+        "notes": "Création si le fichier n'existe pas."
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "={{$env.SUPABASE_REST_URL}}/rest/v1/n8n_workflow_backups",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "apikey",
+                "value": "={{$env.SUPABASE_SERVICE_ROLE_KEY}}"
+              },
+              {
+                "name": "Authorization",
+                "value": "={{`Bearer ${$env.SUPABASE_SERVICE_ROLE_KEY}`}}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Prefer",
+                "value": "return=representation"
+              }
+            ]
+          },
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {}
+            ]
+          },
+          "options": {}
+        },
+        "id": "0b87bfef-c227-4d84-bd3a-4b5a8deea92a",
+        "name": "Supabase REST → Insert backup",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          272,
+          112
+        ],
+        "notesInFlow": true,
+        "notes": "Insère la ligne (file_name, content)."
+      },
+      {
+        "parameters": {
+          "jsCode": "const data = items[0].json?.data ?? items[0].json;  // Récupère la liste des workflows\nconst ts = new Date();\nconst pad = n => String(n).padStart(2,'0');\nconst name = `workflows_${ts.getFullYear()}-${pad(ts.getMonth()+1)}-${pad(ts.getDate())}_${pad(ts.getHours())}-${pad(ts.getMinutes())}.json`;\nconst content = JSON.stringify(data, null, 2);\nconst base64 = Buffer.from(content).toString('base64');\n\nreturn [{\n  json: {\n    path: `backups/${name}`,\n    content,\n    base64\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -768,
+          96
+        ],
+        "id": "d1d4e94b-aa28-4df0-8c47-4fc8dc94a001",
+        "name": "Prepare file (name + base64)1"
+      }
+    ],
+    "connections": {
+      "Cron 02:00 Europe/Paris": {
+        "main": [
+          [
+            {
+              "node": "Export all workflows (Public API v1)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "GitHub GET file (SHA)": {
+        "main": [
+          [
+            {
+              "node": "IF (sha exists?)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF (sha exists?)": {
+        "main": [
+          [
+            {
+              "node": "GitHub API → Update file (with sha)",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "GitHub API → Create file (no sha)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "GitHub API → Update file (with sha)": {
+        "main": [
+          [
+            {
+              "node": "Supabase REST → Insert backup",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "GitHub API → Create file (no sha)": {
+        "main": [
+          [
+            {
+              "node": "Supabase REST → Insert backup",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Export all workflows (Public API v1)": {
+        "main": [
+          [
+            {
+              "node": "Prepare file (name + base64)1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare file (name + base64)1": {
+        "main": [
+          [
+            {
+              "node": "GitHub GET file (SHA)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "settings": {
+      "executionOrder": "v1"
+    },
+    "staticData": null,
+    "meta": null,
+    "pinData": {},
+    "versionId": "5a6ce95f-763e-43b6-bc14-9511355e7703",
+    "triggerCount": 0,
+    "shared": [
+      {
+        "createdAt": "2025-08-25T21:49:40.236Z",
+        "updatedAt": "2025-08-25T21:49:40.236Z",
+        "role": "workflow:owner",
+        "workflowId": "pI2VCgEZWXIJRqyt",
+        "projectId": "niqjqkxnfkcwFIvN"
+      }
+    ],
+    "tags": []
+  }
+]
