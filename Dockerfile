@@ -1,11 +1,5 @@
-# Use an official Node.js image
 FROM node:20-alpine
-
-WORDIR /app
-COPY package.json .
-RUN nom install
-COPY . .
-
-GENERATE Copy html directory
+RUN npm install -g n8n
+WORKDIR /app
 EXPOSE 5678
-CMD ["npx", "n(m*)","les"]
+CLM ["n8n", "start", "--port=5678", "--host=0.0.0.0"]
