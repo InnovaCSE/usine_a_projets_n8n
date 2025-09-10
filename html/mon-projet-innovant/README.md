@@ -1,1 +1,0 @@
-Cette application permettra aux utilisateurs de planifier leurs tâches quotidiennes, de définir des rappels et d'analyser leur productivité à l'aide de statistiques. Elle intégrera également des techniques de gestion du temps comme la méthode Pomodoro et des conseils personnalisés.
