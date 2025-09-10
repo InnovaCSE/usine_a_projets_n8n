@@ -1,1 +1,0 @@
-Une application web qui permet aux utilisateurs de créer, gérer et suivre leurs tâches quotidiennes. Les utilisateurs peuvent ajouter des tâches, les organiser par catégories, définir des échéances et marquer les tâches comme complètes.
