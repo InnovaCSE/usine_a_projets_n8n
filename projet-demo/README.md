@@ -1,1 +1,0 @@
-Creation du fichier README de l'application projet-demo.
